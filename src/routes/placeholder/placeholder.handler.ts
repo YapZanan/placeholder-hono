@@ -75,7 +75,7 @@ export async function placeholderHandler(c: Context) {
     }
   }
 
-  // Create a promise to generate the SVG, and one to prepare the font buffer
+  // Generate the SVG and font buffer in parallel
   const generateSvgPromise = generateSvg({
     width: widthInt,
     height: heightInt,
@@ -91,18 +91,17 @@ export async function placeholderHandler(c: Context) {
     Uint8Array.from(atob(fontData.split(",")[1]), c => c.charCodeAt(0)),
   );
 
-  // Ensure svg2png-wasm is initialized
-  const initializationPromise = ensureSvg2PngInitialized();
+  if (format === "png") {
+    await ensureSvg2PngInitialized();
+  }
 
-  // Wait for all promises to resolve (SVG, font buffer, and initialization)
-  const [svg, fontBuffer] = await Promise.all([generateSvgPromise, fontBufferPromise, initializationPromise]);
+  const [svg, fontBuffer] = await Promise.all([generateSvgPromise, fontBufferPromise]);
 
   if (format === "svg") {
     c.header("Content-Type", "image/svg+xml");
     return new Response(svg, { status: 200, headers: { "Content-Type": "image/svg+xml" } });
   }
 
-  // Convert the SVG to PNG using svg2png-wasm
   const buf = await svg2png(svg, {
     width: widthInt,
     height: heightInt,
