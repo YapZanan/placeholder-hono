@@ -29,43 +29,40 @@ export async function placeholderHandler(c: Context) {
   const bgColor = hexToRgba(bg_color as string);
   const fontColor = hexToRgba(font_color as string);
 
+  let finalFontSize = fontSize;
+  if (fontSize === 0) {
+    while (finalFontSize > 10 && (text as string).length * finalFontSize > widthInt - 20) {
+      finalFontSize--;
+    }
+  }
+
   const svg = generateSvg({
     width: widthInt,
     height: heightInt,
     text: text as string,
-    fontSize,
+    fontSize: finalFontSize,
     bgColor,
     fontColor,
     font: font as FontsEnum,
   });
 
   if (format === "svg") {
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(new TextEncoder().encode(svg));
-        controller.close();
-      },
-    });
-
+    // Return SVG as plain text response
     c.header("Content-Type", "image/svg+xml");
-    return new Response(stream, { status: 200 });
+    return new Response(svg, { status: 200, headers: { "Content-Type": "image/svg+xml" } });
   }
 
+  // Get cached font buffer
   const fontBuffer = getFontBuffer(font as FontsEnum);
 
+  // Convert the SVG to PNG using svg2png-wasm
   const buf = await svg2png(svg, {
     width: widthInt,
     height: heightInt,
     fonts: [fontBuffer],
   });
 
-  const pngStream = new ReadableStream({
-    start(controller) {
-      controller.enqueue(buf);
-      controller.close();
-    },
-  });
-
+  // Return the PNG as the response
   c.header("Content-Type", "image/png");
-  return new Response(pngStream, { status: 200 });
+  return new Response(buf, { status: 200, headers: { "Content-Type": "image/png" } });
 }
