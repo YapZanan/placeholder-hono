@@ -8,12 +8,15 @@ export const placeholderQuerySchema = z.object({
   width: z
     .string()
     .regex(/^\d+$/, { message: "Width must be a valid number." })
+    .refine(value => Number.parseInt(value) <= 2000, {
+      message: "Width must be less than or equal to 2000 pixels.",
+    })
     .optional()
     .openapi({
       param: {
         name: "width",
         in: "query",
-        description: "Width of the placeholder image, specified in pixels. Must be a positive integer.",
+        description: "Width of the placeholder image, specified in pixels. Must be a positive integer and no greater than 1000.",
         example: "600",
       },
     }),
@@ -21,12 +24,15 @@ export const placeholderQuerySchema = z.object({
   height: z
     .string()
     .regex(/^\d+$/, { message: "Height must be a valid number." })
+    .refine(value => Number.parseInt(value) <= 2000, {
+      message: "Height must be less than or equal to 2000 pixels.",
+    })
     .optional()
     .openapi({
       param: {
         name: "height",
         in: "query",
-        description: "Height of the placeholder image, specified in pixels. Must be a positive integer.",
+        description: "Height of the placeholder image, specified in pixels. Must be a positive integer and no greater than 1000.",
         example: "400",
       },
     }),
