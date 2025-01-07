@@ -6,8 +6,14 @@ import wasm from "svg2png-wasm/svg2png_wasm_bg.wasm";
 import { hexToRgba } from "@/utils/color-utils";
 import { fonts, FontsEnum } from "@/utils/fonts";
 
-// Initialize svg2png-wasm
-initialize(wasm).catch(() => {});
+let svg2pngInitialized = false;
+
+async function ensureSvg2PngInitialized() {
+  if (!svg2pngInitialized) {
+    await initialize(wasm);
+    svg2pngInitialized = true;
+  }
+}
 
 function generateSvg({
   width,
@@ -69,7 +75,8 @@ export async function placeholderHandler(c: Context) {
     }
   }
 
-  const svg = generateSvg({
+  // Create a promise to generate the SVG, and one to prepare the font buffer
+  const generateSvgPromise = generateSvg({
     width: widthInt,
     height: heightInt,
     text: text as string,
@@ -79,15 +86,21 @@ export async function placeholderHandler(c: Context) {
     font: font as FontsEnum,
   });
 
+  const fontData = fonts[font as FontsEnum];
+  const fontBufferPromise = Promise.resolve(
+    Uint8Array.from(atob(fontData.split(",")[1]), c => c.charCodeAt(0)),
+  );
+
+  // Ensure svg2png-wasm is initialized
+  const initializationPromise = ensureSvg2PngInitialized();
+
+  // Wait for all promises to resolve (SVG, font buffer, and initialization)
+  const [svg, fontBuffer] = await Promise.all([generateSvgPromise, fontBufferPromise, initializationPromise]);
+
   if (format === "svg") {
-    // Return SVG as plain text response
     c.header("Content-Type", "image/svg+xml");
     return new Response(svg, { status: 200, headers: { "Content-Type": "image/svg+xml" } });
   }
-
-  // Convert Base64 font to Uint8Array
-  const fontData = fonts[font as FontsEnum];
-  const fontBuffer = Uint8Array.from(atob(fontData.split(",")[1]), c => c.charCodeAt(0));
 
   // Convert the SVG to PNG using svg2png-wasm
   const buf = await svg2png(svg, {
@@ -96,7 +109,6 @@ export async function placeholderHandler(c: Context) {
     fonts: [fontBuffer],
   });
 
-  // Return the PNG as the response
   c.header("Content-Type", "image/png");
   return new Response(buf, { status: 200, headers: { "Content-Type": "image/png" } });
 }
