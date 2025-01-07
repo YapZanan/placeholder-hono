@@ -1,5 +1,3 @@
-import type { ZodError } from "zod";
-
 import { config } from "dotenv";
 import { expand } from "dotenv-expand";
 import { z } from "zod";
