@@ -6,14 +6,8 @@ import wasm from "svg2png-wasm/svg2png_wasm_bg.wasm";
 import { hexToRgba } from "@/utils/color-utils";
 import { fonts, FontsEnum } from "@/utils/fonts";
 
-let svg2pngInitialized = false;
-
-async function ensureSvg2PngInitialized() {
-  if (!svg2pngInitialized) {
-    await initialize(wasm);
-    svg2pngInitialized = true;
-  }
-}
+// Initialize svg2png-wasm
+initialize(wasm).catch(() => {});
 
 function generateSvg({
   width,
@@ -75,8 +69,7 @@ export async function placeholderHandler(c: Context) {
     }
   }
 
-  // Generate the SVG and font buffer in parallel
-  const generateSvgPromise = generateSvg({
+  const svg = generateSvg({
     width: widthInt,
     height: heightInt,
     text: text as string,
@@ -86,28 +79,24 @@ export async function placeholderHandler(c: Context) {
     font: font as FontsEnum,
   });
 
-  const fontData = fonts[font as FontsEnum];
-  const fontBufferPromise = Promise.resolve(
-    Uint8Array.from(atob(fontData.split(",")[1]), c => c.charCodeAt(0)),
-  );
-
-  if (format === "png") {
-    await ensureSvg2PngInitialized();
-  }
-
-  const [svg, fontBuffer] = await Promise.all([generateSvgPromise, fontBufferPromise]);
-
   if (format === "svg") {
+    // Return SVG as plain text response
     c.header("Content-Type", "image/svg+xml");
     return new Response(svg, { status: 200, headers: { "Content-Type": "image/svg+xml" } });
   }
 
+  // Convert Base64 font to Uint8Array
+  const fontData = fonts[font as FontsEnum];
+  const fontBuffer = Uint8Array.from(atob(fontData.split(",")[1]), c => c.charCodeAt(0));
+
+  // Convert the SVG to PNG using svg2png-wasm
   const buf = await svg2png(svg, {
     width: widthInt,
     height: heightInt,
     fonts: [fontBuffer],
   });
 
+  // Return the PNG as the response
   c.header("Content-Type", "image/png");
   return new Response(buf, { status: 200, headers: { "Content-Type": "image/png" } });
 }
