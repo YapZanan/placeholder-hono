@@ -58,7 +58,7 @@ export async function placeholderHandler(c: Context) {
 
   const widthInt = Number.parseInt(width as string);
   const heightInt = Number.parseInt(height as string);
-  const fontSize = font_size === "0" ? widthInt / Math.round((text as string).length / 2) : Number.parseInt(font_size as string);
+  const fontSize = font_size === "0" ? widthInt / Math.round((text as string).length / 1.75) : Number.parseInt(font_size as string);
   const bgColor = hexToRgba(bg_color as string);
   const fontColor = hexToRgba(font_color as string);
 
