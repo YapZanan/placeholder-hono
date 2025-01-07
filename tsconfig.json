@@ -17,6 +17,7 @@
     "outDir": "./dist",
     "skipLibCheck": true
   },
+  "include": ["src/**/*", "src/declarations.d.ts"], // Make sure `declarations.d.ts` is included
   "tsc-alias": {
     "resolveFullPaths": true,
     "resolveFullExtension": ".js"

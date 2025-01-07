@@ -13,10 +13,8 @@
   "dependencies": {
     "@hono/node-server": "^1.13.7",
     "@hono/zod-openapi": "^0.18.3",
-    "@napi-rs/canvas": "^0.1.65",
+    "@resvg/resvg-js": "^2.6.2",
     "@scalar/hono-api-reference": "^0.5.165",
-    "canvas": "^3.0.1",
-    "canvas-constructor": "^7.0.2",
     "dotenv": "^16.4.7",
     "dotenv-expand": "^12.0.1",
     "hono": "^4.6.16",
@@ -24,9 +22,9 @@
     "pino": "^9.6.0",
     "pino-pretty": "^13.0.0",
     "sharp": "^0.33.5",
-    "skia-canvas": "^2.0.1",
     "stoker": "^1.4.2",
     "svg2png-wasm": "^1.4.1",
+    "thumbo": "^1.0.8",
     "zod": "^3.24.1"
   },
   "devDependencies": {
